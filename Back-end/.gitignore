@@ -1,0 +1,15 @@
+# Ignore virtual environment
+heproject-env/
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore log files
+*.log
+
+# Ignore uploads folder
+uploads/
+
+# # Ignore temporary test files/folders
+# !Back-end-tests/
