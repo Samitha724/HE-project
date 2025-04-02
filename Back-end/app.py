@@ -971,7 +971,7 @@ def compute():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=False)  #app.run(debug=False) false for deplyoment this can hadle multiple requests true is development so it can only handle 1 request at a time 
 
 
 
