@@ -1,0 +1,28 @@
+# Exclude Python cache and temporary files
+__pycache__/
+*.pyc
+*.pyo
+
+# Exclude virtual environment
+heproject-env/
+
+# Exclude log files
+*.log
+
+# Exclude version control data
+.git/
+.vercel/
+.gitignore
+
+# Exclude test directories
+Back-end-tests/
+
+# Exclude Vercel folder
+Tried Versel for back-end/
+
+# Exclude runtime configuration
+runtime.txt
+
+# You can choose to exclude the uploads folder entirely or leave it empty if needed.
+# If you need uploads folder as an empty directory, uncomment below line:
+# uploads/

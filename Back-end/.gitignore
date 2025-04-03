@@ -8,8 +8,16 @@ __pycache__/
 # Ignore log files
 *.log
 
-# Ignore uploads folder
-uploads/
+# # Ignore uploads folder if ignore will cause error
+# uploads/
+
+# Ignore versel folder
+Tried Versel for back-end/
 
 # # Ignore temporary test files/folders
 # !Back-end-tests/
+.vercel
+
+# Ignore Docker files
+Dockerfile
+.dockerignore

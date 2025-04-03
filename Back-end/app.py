@@ -970,8 +970,8 @@ def compute():
         return jsonify({"error": str(e)}), 500
 
 
-if __name__ == "__main__":
-    app.run(debug=False)  #app.run(debug=False) false for deplyoment this can hadle multiple requests true is development so it can only handle 1 request at a time 
+if __name__ == "__main__":#can remove thse two lines when using docer google cloud run these 2 lies wont effect the build
+    app.run(debug=True)  #app.run(debug=False) false for deplyoment this can hadle multiple requests true is development so it can only handle 1 request at a time 
 
 
 

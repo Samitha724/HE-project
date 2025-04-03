@@ -64,7 +64,7 @@
 
 // export default Encrypt;
 
-
+//encript.jsx
 import axios from "axios";
 import { useState } from "react";
 
@@ -77,7 +77,12 @@ const Encrypt = () => {
   const handleEncrypt = async () => {
     setIsLoading(true);
     try {
-      const response = await axios.post("http://127.0.0.1:5000/encrypt");
+      // const response = await axios.post("http://127.0.0.1:5000/encrypt");//for Localhost
+      // const response = await axios.post("https://heproject-backend-575598110807.asia-south1.run.app/encrypt");//for docker deploy
+
+      const apiUrl = process.env.REACT_APP_API_URL;//for docker deploy with env
+      const response = await axios.post(`${apiUrl}/encrypt`);//for docker deploy with env
+
       setMessage(response.data.message);
     } catch (error) {
       setMessage(error.response?.data.error || "Error encrypting dataset");

@@ -360,7 +360,12 @@ const Compute = () => {
   const handleCompute = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("http://127.0.0.1:5000/generate-keys");
+      // const response = await fetch("http://127.0.0.1:5000/generate-keys");//for local host
+      // const response = await fetch("https://heproject-backend-575598110807.asia-south1.run.app/generate-keys");//for docker deploy  
+      const apiUrl = process.env.REACT_APP_API_URL;//for docker deploy with env
+      const response = await fetch(`${apiUrl}/generate-keys`);//for docker deploy with env
+
+
       const data = await response.json();
       
       if (!response.ok) {

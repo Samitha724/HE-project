@@ -1,3 +1,4 @@
+//UploadCSV.jsx
 import { useState } from "react";
 import axios from "axios";
 
@@ -21,8 +22,15 @@ function UploadCSV() {
     formData.append("file", file);
 
     try {
-      const response = await axios.post("http://localhost:5000/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+      // const response = await axios.post("http://localhost:5000/upload", formData, { //for local host
+      //   headers: { "Content-Type": "multipart/form-data" },  //for local host
+
+      // const response = await axios.post("https://heproject-backend-575598110807.asia-south1.run.app/upload", formData, { //for docker deploy
+      //   headers: { "Content-Type": "multipart/form-data" },     //for docker deploy
+      const apiUrl = process.env.REACT_APP_API_URL;
+      const response = await axios.post(`${apiUrl}/upload`, formData, { //for docker deploy with env
+        headers: { "Content-Type": "multipart/form-data" },     //for docker deploy with env
+      
       });
 
       setMessage(response.data.message);//massage from backend check1
