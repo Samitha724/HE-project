@@ -23,6 +23,6 @@ Tried Versel for back-end/
 # Exclude runtime configuration
 runtime.txt
 
-# You can choose to exclude the uploads folder entirely or leave it empty if needed.
+
 # If you need uploads folder as an empty directory, uncomment below line:
 # uploads/

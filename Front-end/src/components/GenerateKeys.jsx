@@ -1,33 +1,44 @@
-//GenerateKeys.jsx
-import axios from "axios";
 import { useState } from "react";
+import axios from "axios";
 
 const GenerateKeys = () => {
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGenerateKeys = async () => {
+    setIsLoading(true);
     try {
-      // const response = await axios.get("http://127.0.0.1:5000/generate-keys");//for local host
-      // const response = await axios.get("https://heproject-backend-575598110807.asia-south1.run.app/generate-keys");//For docker deploy
+      // const response = await axios.get("http://localhost:5000/generate-keys");
+
       const apiUrl = process.env.REACT_APP_API_URL;//for docker deploy with env
-      const response = await axios.get(`${apiUrl}/generate-keys`);//for docker deploy with env
+      const response = await axios.get(`${apiUrl}/generate-keys`);
 
-
-      setMessage(response.data.message);//check1 display backend massage
+      setMessage(response.data.message || "Keys generated successfully!");
     } catch (error) {
-      setMessage(error.response?.data.error || "Error generating keys");//check1 updated this line to display backend massage
+      setMessage(error.response?.data.error || "Error generating keys");
+    } finally {
+      setIsLoading(false);
     }
   };
-  //css13
+
   return (
     <div className="container">
-      <h2>Generate HE Keys</h2>
-      <button onClick={handleGenerateKeys}>
-        Generate Keys
+      <h2>Generate Homomorphic Encryption Keys</h2>
+      <p>Generate the necessary keys for encryption using the current parameters.</p>
+      
+      <button onClick={handleGenerateKeys} disabled={isLoading}>
+        {isLoading ? "Generating..." : "Generate Keys"}
       </button>
+      
+      {isLoading && (
+        <div className="progress-container">
+          <div className="progress-bar active"></div>
+        </div>
+      )}
+      
       {message && <p className={`message ${message.includes("Error") ? "error" : "success"}`}>{message}</p>}
     </div>
-  );//css13
+  );
 };
 
 export default GenerateKeys;

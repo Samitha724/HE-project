@@ -1,781 +1,14 @@
-#before updating3-26-25
-# from flask import Flask, request, jsonify
-# from flask_cors import CORS
-# import os
-# from werkzeug.utils import secure_filename
-# import torch
-# import random
-
-# from data_handler import process_heart_disease_data
-# from model_manager import LR, EncryptedLR, train_model
-# from encryption_manager import EncryptionManager
-
-# # Initialize Flask app
-# app = Flask(__name__)
-# CORS(app)
-
-# # App configuration
-# UPLOAD_FOLDER = 'uploads'
-# ALLOWED_EXTENSIONS = {'csv'}
-# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# # Create uploads directory
-# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# # Set random seeds
-# torch.random.manual_seed(73)
-# random.seed(73)
-
-# # Global state
-# uploaded_file_path = None
-# x_test = None
-# y_test = None
-# model = None
-# encryption_manager = EncryptionManager()
-# enc_x_test = None
-
-# def allowed_file(filename):
-#     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# @app.route("/")
-# def home():
-#     return jsonify({"message": "Backend is running!1"})
-
-# @app.route("/upload", methods=["POST"])
-# def upload_file():
-#     """Handle file upload endpoint."""
-#     global uploaded_file_path
-    
-#     if 'file' not in request.files:
-#         return jsonify({"error": "No file part2"}), 400
-    
-#     file = request.files['file']
-#     if file.filename == '':
-#         return jsonify({"error": "No selected file3"}), 400
-    
-#     if file and allowed_file(file.filename):
-#         filename = secure_filename(file.filename)
-#         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-#         file.save(filepath)
-#         uploaded_file_path = filepath
-#         return jsonify({"message": "File uploaded successfully!!4"}), 200
-    
-#     return jsonify({"error": "Invalid file type!!5"}), 400
-
-# @app.route("/generate-keys", methods=["GET"])
-# def generate_keys():
-#     """Generate keys and train model endpoint."""
-#     global model, x_test, y_test
-    
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     try:
-#         # Process data 
-#         x_train, y_train, x_test, y_test = process_heart_disease_data(uploaded_file_path)
-        
-#         # Train model
-#         model = LR(x_train.shape[1])
-#         model = train_model(model, x_train, y_train)
-        
-#         # Generate encryption keys
-#         encryption_manager.generate_keys()
-
-#         return jsonify({"message": "Keys generated and model trained successfully!!"}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-# @app.route("/encrypt", methods=["POST"])
-# def encrypt():
-#     """Encrypt test data endpoint."""
-#     global enc_x_test
-    
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     if encryption_manager.ctx_eval is None:
-#         return jsonify({"error": "Please generate keys first!!"}), 400
-        
-#     try:
-#         enc_x_test = encryption_manager.encrypt_data(x_test)
-#         return jsonify({"message": "Data encrypted successfully!!"}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-# @app.route("/compute", methods=["GET"])
-# def compute():
-#     """Compute results endpoint."""
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     if encryption_manager.ctx_eval is None:
-#         return jsonify({"error": "Please generate keys first!!"}), 400
-        
-#     if enc_x_test is None:
-#         return jsonify({"error": "Please encrypt data first!!"}), 400
-
-#     try:
-#         # Create encrypted model
-#         eelr = EncryptedLR(model)
-        
-#         # Calculate plain accuracy
-#         def accuracy(model, x, y):
-#             out = model(x)
-#             correct = torch.abs(y - out) < 0.5
-#             return correct.float().mean()
-            
-#         plain_accuracy = accuracy(model, x_test, y_test)
-        
-#         # Calculate encrypted accuracy
-#         encrypted_accuracy = encryption_manager.evaluate_model(eelr, enc_x_test, y_test)
-#         diff_accuracy = plain_accuracy - encrypted_accuracy
-        
-#         response_data = {
-#             "message": "Computation completed successfully",
-#             "encrypted_accuracy": float(encrypted_accuracy),
-#             "plain_accuracy": float(plain_accuracy),
-#             "diff_accuracy": float(diff_accuracy)
-#         }
-        
-#         return jsonify(response_data), 200
-        
-#     except Exception as e:
-#         print(f"Error in /compute: {str(e)}")
-#         return jsonify({"error": str(e)}), 500
-
-# if __name__ == "__main__":
-#     app.run(debug=True)
-
-# # updated one 3-26-25 new 1
-# from flask import Flask, request, jsonify
-# from flask_cors import CORS
-# import os
-# from werkzeug.utils import secure_filename
-# import torch
-# import random
-# from time import time
-
-
-# from data_handler import process_heart_disease_data
-# from model_manager import LR, EncryptedLR, train_model
-# from encryption_manager import EncryptionManager
-
-# # Initialize Flask app
-# app = Flask(__name__)
-# CORS(app)
-
-# # App configuration
-# UPLOAD_FOLDER = 'uploads'
-# ALLOWED_EXTENSIONS = {'csv'}
-# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# # Create uploads directory
-# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# # Set random seeds
-# torch.random.manual_seed(73)
-# random.seed(73)
-
-# # Global state
-# uploaded_file_path = None
-# x_test = None
-# y_test = None
-# model = None
-# encryption_manager = EncryptionManager()
-# enc_x_test = None
-
-# def allowed_file(filename):
-#     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# @app.route("/")
-# def home():
-#     return jsonify({"message": "Backend is running!1"})
-
-# @app.route("/upload", methods=["POST"])
-# def upload_file():
-#     """Handle file upload endpoint."""
-#     global uploaded_file_path
-    
-#     if 'file' not in request.files:
-#         return jsonify({"error": "No file part2"}), 400
-    
-#     file = request.files['file']
-#     if file.filename == '':
-#         return jsonify({"error": "No selected file3"}), 400
-    
-#     if file and allowed_file(file.filename):
-#         filename = secure_filename(file.filename)
-#         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-#         file.save(filepath)
-#         uploaded_file_path = filepath
-#         return jsonify({"message": "File uploaded successfully!!4"}), 200
-    
-#     return jsonify({"error": "Invalid file type!!5"}), 400
-
-# @app.route("/generate-keys", methods=["GET"])
-# def generate_keys():
-#     """Generate keys and train model endpoint with parameter analysis."""
-#     global model, x_test, y_test
-    
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     try:
-#         # Process data 
-#         x_train, y_train, x_test, y_test = process_heart_disease_data(uploaded_file_path)
-        
-#         # Perform parameter analysis
-#         results = []
-        
-#         # Get parameter combinations
-#         param_combinations = encryption_manager.get_parameter_combinations()
-        
-#         for poly_mod_degree, coeff_mod_bit_sizes in param_combinations:
-#             # Reset model for each parameter set
-#             model = LR(x_train.shape[1])
-            
-#             # Train model
-#             start_train_time = time()
-#             model = train_model(model, x_train, y_train)
-#             train_time = time() - start_train_time
-            
-#             # Generate keys with specific parameters
-#             start_key_gen_time = time()
-#             encryption_manager.generate_keys(
-#                 poly_mod_degree=poly_mod_degree, 
-#                 coeff_mod_bit_sizes=coeff_mod_bit_sizes
-#             )
-#             key_gen_time = time() - start_key_gen_time
-            
-#             # Encrypt test data
-#             start_encrypt_time = time()
-#             enc_x_test = encryption_manager.encrypt_data(x_test)
-#             encrypt_time = time() - start_encrypt_time
-            
-#             # Create encrypted model
-#             eelr = EncryptedLR(model)
-            
-#             # Calculate plain accuracy
-#             def accuracy(model, x, y):
-#                 out = model(x)
-#                 correct = torch.abs(y - out) < 0.5
-#                 return correct.float().mean()
-            
-#             plain_accuracy = accuracy(model, x_test, y_test)
-            
-#             # Calculate encrypted accuracy
-#             start_compute_time = time()
-#             encrypted_accuracy = encryption_manager.evaluate_model(eelr, enc_x_test, y_test)
-#             compute_time = time() - start_compute_time
-            
-#             # Store results
-#             results.append({
-#                 "poly_mod_degree": poly_mod_degree,
-#                 "coeff_mod_bit_sizes": coeff_mod_bit_sizes,
-#                 "train_time": train_time,
-#                 "key_gen_time": key_gen_time,
-#                 "encrypt_time": encrypt_time,
-#                 "compute_time": compute_time,
-#                 "plain_accuracy": float(plain_accuracy),
-#                 "encrypted_accuracy": float(encrypted_accuracy)
-#             })
-        
-#         return jsonify({"results": results}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-# @app.route("/encrypt", methods=["POST"])
-# def encrypt():
-#     """Encrypt test data endpoint."""
-#     global enc_x_test
-    
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     if encryption_manager.ctx_eval is None:
-#         return jsonify({"error": "Please generate keys first!!"}), 400
-        
-#     try:
-#         enc_x_test = encryption_manager.encrypt_data(x_test)
-#         return jsonify({"message": "Data encrypted successfully!!"}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-# @app.route("/compute", methods=["GET"])
-# def compute():
-#     """Compute results endpoint."""
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     if encryption_manager.ctx_eval is None:
-#         return jsonify({"error": "Please generate keys first!!"}), 400
-        
-#     if enc_x_test is None:
-#         return jsonify({"error": "Please encrypt data first!!"}), 400
-
-#     try:
-#         # Create encrypted model
-#         eelr = EncryptedLR(model)
-        
-#         # Calculate plain accuracy
-#         def accuracy(model, x, y):
-#             out = model(x)
-#             correct = torch.abs(y - out) < 0.5
-#             return correct.float().mean()
-            
-#         plain_accuracy = accuracy(model, x_test, y_test)
-        
-#         # Calculate encrypted accuracy
-#         encrypted_accuracy = encryption_manager.evaluate_model(eelr, enc_x_test, y_test)
-#         diff_accuracy = plain_accuracy - encrypted_accuracy
-        
-#         response_data = {
-#             "message": "Computation completed successfully",
-#             "encrypted_accuracy": float(encrypted_accuracy),
-#             "plain_accuracy": float(plain_accuracy),
-#             "diff_accuracy": float(diff_accuracy)
-#         }
-        
-#         return jsonify(response_data), 200
-        
-#     except Exception as e:
-#         print(f"Error in /compute: {str(e)}")
-#         return jsonify({"error": str(e)}), 500
-
-# if __name__ == "__main__":
-#     app.run(debug=True)
-
-# #3-26-25 new 2
-
-# from flask import Flask, request, jsonify
-# from flask_cors import CORS
-# import os
-# from werkzeug.utils import secure_filename
-# import torch
-# import random
-# from time import time
-
-# from data_handler import process_heart_disease_data
-# from model_manager import LR, EncryptedLR, train_model
-# from encryption_manager import EncryptionManager
-
-# # Initialize Flask app
-# app = Flask(__name__)
-# CORS(app)
-
-# # App configuration
-# UPLOAD_FOLDER = 'uploads'
-# ALLOWED_EXTENSIONS = {'csv'}
-# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# # Create uploads directory
-# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# # Set random seeds
-# torch.random.manual_seed(73)
-# random.seed(73)
-
-# # Global state
-# uploaded_file_path = None
-# x_test = None
-# y_test = None
-# model = None
-# encryption_manager = EncryptionManager()
-
-# def allowed_file(filename):
-#     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# @app.route("/")
-# def home():
-#     return jsonify({"message": "Backend is running!"})
-
-# @app.route("/upload", methods=["POST"])
-# def upload_file():
-#     """Handle file upload endpoint."""
-#     global uploaded_file_path
-    
-#     if 'file' not in request.files:
-#         return jsonify({"error": "No file part"}), 400
-    
-#     file = request.files['file']
-#     if file.filename == '':
-#         return jsonify({"error": "No selected file"}), 400
-    
-#     if file and allowed_file(file.filename):
-#         filename = secure_filename(file.filename)
-#         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-#         file.save(filepath)
-#         uploaded_file_path = filepath
-#         return jsonify({"message": "File uploaded successfully!"}), 200
-    
-#     return jsonify({"error": "Invalid file type!"}), 400
-
-# @app.route("/generate-keys", methods=["GET"])
-# def generate_keys():
-#     """Generate keys and train model endpoint with parameter analysis."""
-#     global model, x_test, y_test
-    
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     try:
-#         # Process data 
-#         x_train, y_train, x_test, y_test = process_heart_disease_data(uploaded_file_path)
-        
-#         # Perform parameter analysis
-#         results = []
-        
-#         # Get parameter combinations
-#         param_combinations = encryption_manager.get_parameter_combinations()
-        
-#         for poly_mod_degree, coeff_mod_bit_sizes in param_combinations:
-#             try:
-#                 print(f"Trying poly_mod_degree={poly_mod_degree}, coeff_mod_bit_sizes={coeff_mod_bit_sizes}")
-#                 # Reset model for each parameter set
-#                 model = LR(x_train.shape[1])
-                
-#                 # Train model
-#                 start_train_time = time()
-#                 model = train_model(model, x_train, y_train)
-#                 train_time = time() - start_train_time
-                
-#                 # Generate keys with specific parameters
-#                 start_key_gen_time = time()
-#                 encryption_manager.generate_keys(
-#                     poly_mod_degree=poly_mod_degree, 
-#                     coeff_mod_bit_sizes=coeff_mod_bit_sizes
-#                 )
-#                 key_gen_time = time() - start_key_gen_time
-                
-#             except ValueError as ve:
-#                 print(f"Parameter error: {ve}")
-#                 continue
-#             # # Reset model for each parameter set
-#             # model = LR(x_train.shape[1])
-            
-#             # # Train model
-#             # start_train_time = time()
-#             # model = train_model(model, x_train, y_train)
-#             # train_time = time() - start_train_time
-            
-#             # # Generate keys with specific parameters
-#             # start_key_gen_time = time()
-#             # encryption_manager.generate_keys(
-#             #     poly_mod_degree=poly_mod_degree, 
-#             #     coeff_mod_bit_sizes=coeff_mod_bit_sizes
-#             # )
-#             # key_gen_time = time() - start_key_gen_time
-            
-#             # Encrypt test data
-#             start_encrypt_time = time()
-#             enc_x_test = encryption_manager.encrypt_data(x_test)
-#             encrypt_time = time() - start_encrypt_time
-            
-#             # Create encrypted model
-#             eelr = EncryptedLR(model)
-            
-#             # Calculate plain accuracy
-#             def accuracy(model, x, y):
-#                 out = model(x)
-#                 correct = torch.abs(y - out) < 0.5
-#                 return correct.float().mean()
-            
-#             plain_accuracy = accuracy(model, x_test, y_test)
-            
-#             # Calculate encrypted accuracy
-#             start_compute_time = time()
-#             encrypted_accuracy = encryption_manager.evaluate_model(eelr, enc_x_test, y_test)
-#             compute_time = time() - start_compute_time
-            
-#             # Store results
-#             results.append({
-#                 "poly_mod_degree": poly_mod_degree,
-#                 "coeff_mod_bit_sizes": coeff_mod_bit_sizes,
-#                 "train_time": train_time,
-#                 "key_gen_time": key_gen_time,
-#                 "encrypt_time": encrypt_time,
-#                 "compute_time": compute_time,
-#                 "plain_accuracy": float(plain_accuracy),
-#                 "encrypted_accuracy": float(encrypted_accuracy)
-#             })
-        
-#         return jsonify({"results": results}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-# @app.route("/encrypt", methods=["POST"])
-# def encrypt():
-#     """Encrypt test data endpoint."""
-#     global enc_x_test
-    
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     if encryption_manager.ctx_eval is None:
-#         return jsonify({"error": "Please generate keys first!!"}), 400
-        
-#     try:
-#         enc_x_test = encryption_manager.encrypt_data(x_test)
-#         return jsonify({"message": "Data encrypted successfully!!"}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-# @app.route("/compute", methods=["GET"])
-# def compute():
-#     """Compute results endpoint."""
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     if encryption_manager.ctx_eval is None:
-#         return jsonify({"error": "Please generate keys first!!"}), 400
-        
-#     if enc_x_test is None:
-#         return jsonify({"error": "Please encrypt data first!!"}), 400
-
-#     try:
-#         # Create encrypted model
-#         eelr = EncryptedLR(model)
-        
-#         # Calculate plain accuracy
-#         def accuracy(model, x, y):
-#             out = model(x)
-#             correct = torch.abs(y - out) < 0.5
-#             return correct.float().mean()
-            
-#         plain_accuracy = accuracy(model, x_test, y_test)
-        
-#         # Calculate encrypted accuracy
-#         encrypted_accuracy = encryption_manager.evaluate_model(eelr, enc_x_test, y_test)
-#         diff_accuracy = plain_accuracy - encrypted_accuracy
-        
-#         response_data = {
-#             "message": "Computation completed successfully",
-#             "encrypted_accuracy": float(encrypted_accuracy),
-#             "plain_accuracy": float(plain_accuracy),
-#             "diff_accuracy": float(diff_accuracy)
-#         }
-        
-#         return jsonify(response_data), 200
-        
-#     except Exception as e:
-#         print(f"Error in /compute: {str(e)}")
-#         return jsonify({"error": str(e)}), 500
-
-# if __name__ == "__main__":
-#     app.run(debug=True)
-
-# #back to new 1 with a error handiling massage effect 2 files
-# from flask import Flask, request, jsonify
-# from flask_cors import CORS
-# import os
-# from werkzeug.utils import secure_filename
-# import torch
-# import random
-# from time import time
-
-# from data_handler import process_heart_disease_data
-# from model_manager import LR, EncryptedLR, train_model
-# from encryption_manager import EncryptionManager
-
-# # Initialize Flask app
-# app = Flask(__name__)
-# CORS(app)
-
-# # App configuration
-# UPLOAD_FOLDER = 'uploads'
-# ALLOWED_EXTENSIONS = {'csv'}
-# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# # Create uploads directory
-# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# # Set random seeds
-# torch.random.manual_seed(73)
-# random.seed(73)
-
-# # Global state
-# uploaded_file_path = None
-# x_test = None
-# y_test = None
-# model = None
-# encryption_manager = EncryptionManager()
-
-# def allowed_file(filename):
-#     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# @app.route("/")
-# def home():
-#     return jsonify({"message": "Backend is running!"})
-
-# @app.route("/upload", methods=["POST"])
-# def upload_file():
-#     """Handle file upload endpoint."""
-#     global uploaded_file_path
-    
-#     if 'file' not in request.files:
-#         return jsonify({"error": "No file part"}), 400
-    
-#     file = request.files['file']
-#     if file.filename == '':
-#         return jsonify({"error": "No selected file"}), 400
-    
-#     if file and allowed_file(file.filename):
-#         filename = secure_filename(file.filename)
-#         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-#         file.save(filepath)
-#         uploaded_file_path = filepath
-#         return jsonify({"message": "File uploaded successfully!"}), 200
-    
-#     return jsonify({"error": "Invalid file type!"}), 400
-
-# @app.route("/generate-keys", methods=["GET"])
-# def generate_keys():
-#     """Generate keys and train model endpoint with parameter analysis."""
-#     global model, x_test, y_test
-    
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     try:
-#         # Process data 
-#         x_train, y_train, x_test, y_test = process_heart_disease_data(uploaded_file_path)
-        
-#         # Perform parameter analysis
-#         results = []
-        
-#         # Get parameter combinations
-#         param_combinations = encryption_manager.get_parameter_combinations()
-        
-#         for poly_mod_degree, coeff_mod_bit_sizes in param_combinations:
-#             print(f"Trying poly_mod_degree={poly_mod_degree}, coeff_mod_bit_sizes={coeff_mod_bit_sizes}")#new error print added
-#             # Reset model for each parameter set
-#             model = LR(x_train.shape[1])
-            
-#             # Train model
-#             start_train_time = time()
-#             model = train_model(model, x_train, y_train)
-#             train_time = time() - start_train_time
-            
-#             # Generate keys with specific parameters
-#             start_key_gen_time = time()
-#             encryption_manager.generate_keys(
-#                 poly_mod_degree=poly_mod_degree, 
-#                 coeff_mod_bit_sizes=coeff_mod_bit_sizes
-#             )
-#             key_gen_time = time() - start_key_gen_time
-            
-#             # Encrypt test data
-#             start_encrypt_time = time()
-#             enc_x_test = encryption_manager.encrypt_data(x_test)
-#             encrypt_time = time() - start_encrypt_time
-            
-#             # Create encrypted model
-#             eelr = EncryptedLR(model)
-            
-#             # Calculate plain accuracy
-#             def accuracy(model, x, y):
-#                 out = model(x)
-#                 correct = torch.abs(y - out) < 0.5
-#                 return correct.float().mean()
-            
-#             plain_accuracy = accuracy(model, x_test, y_test)
-            
-#             # Calculate encrypted accuracy
-#             start_compute_time = time()
-#             encrypted_accuracy = encryption_manager.evaluate_model(eelr, enc_x_test, y_test)
-#             compute_time = time() - start_compute_time
-            
-#             # Store results
-#             results.append({
-#                 "poly_mod_degree": poly_mod_degree,
-#                 "coeff_mod_bit_sizes": coeff_mod_bit_sizes,
-#                 "train_time": train_time,
-#                 "key_gen_time": key_gen_time,
-#                 "encrypt_time": encrypt_time,
-#                 "compute_time": compute_time,
-#                 "plain_accuracy": float(plain_accuracy),
-#                 "encrypted_accuracy": float(encrypted_accuracy)
-#             })
-        
-#         return jsonify({"results": results}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-# @app.route("/encrypt", methods=["POST"])
-# def encrypt():
-#     """Encrypt test data endpoint."""
-#     global enc_x_test
-    
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     if encryption_manager.ctx_eval is None:
-#         return jsonify({"error": "Please generate keys first!!"}), 400
-        
-#     try:
-#         enc_x_test = encryption_manager.encrypt_data(x_test)
-#         return jsonify({"message": "Data encrypted successfully!!"}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-# @app.route("/compute", methods=["GET"])
-# def compute():
-#     """Compute results endpoint."""
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     if encryption_manager.ctx_eval is None:
-#         return jsonify({"error": "Please generate keys first!!"}), 400
-        
-#     if enc_x_test is None:
-#         return jsonify({"error": "Please encrypt data first!!"}), 400
-
-#     try:
-#         # Create encrypted model
-#         eelr = EncryptedLR(model)
-        
-#         # Calculate plain accuracy
-#         def accuracy(model, x, y):
-#             out = model(x)
-#             correct = torch.abs(y - out) < 0.5
-#             return correct.float().mean()
-            
-#         plain_accuracy = accuracy(model, x_test, y_test)
-        
-#         # Calculate encrypted accuracy
-#         encrypted_accuracy = encryption_manager.evaluate_model(eelr, enc_x_test, y_test)
-#         diff_accuracy = plain_accuracy - encrypted_accuracy
-        
-#         response_data = {
-#             "message": "Computation completed successfully",
-#             "encrypted_accuracy": float(encrypted_accuracy),
-#             "plain_accuracy": float(plain_accuracy),
-#             "diff_accuracy": float(diff_accuracy)
-#         }
-        
-#         return jsonify(response_data), 200
-        
-#     except Exception as e:
-#         print(f"Error in /compute: {str(e)}")
-#         return jsonify({"error": str(e)}), 500
-
-# if __name__ == "__main__":
-#     app.run(debug=True)
-
-
-#app.py new 3 came back
-
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
 from werkzeug.utils import secure_filename
-import torch
 import random
-from time import time
+import torch
 
-from data_handler import process_heart_disease_data
-from model_manager import LR, EncryptedLR, train_model
-from encryption_manager import EncryptionManager
+from services.data_service import DataService
+from services.model_service import ModelService
+from services.encryption_service import EncryptionService
+from services.analysis_service import AnalysisService
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -793,25 +26,22 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 torch.random.manual_seed(73)
 random.seed(73)
 
-# Global state
-uploaded_file_path = None
-x_test = None
-y_test = None
-model = None
-encryption_manager = EncryptionManager()
+# Services
+data_service = DataService()
+model_service = ModelService()
+encryption_service = EncryptionService()
+analysis_service = AnalysisService(data_service, model_service, encryption_service)
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @app.route("/")
-def home():
+def home():    
     return jsonify({"message": "Backend is running!"})
 
 @app.route("/upload", methods=["POST"])
 def upload_file():
-    """Handle file upload endpoint."""
-    global uploaded_file_path
-    
+    """Handle file upload endpoint."""    
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
     
@@ -823,144 +53,137 @@ def upload_file():
         filename = secure_filename(file.filename)
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
-        uploaded_file_path = filepath
+        data_service.set_file_path(filepath)
         return jsonify({"message": "File uploaded successfully!"}), 200
     
     return jsonify({"error": "Invalid file type!"}), 400
 
+@app.route("/parameters", methods=["GET"])
+def get_parameters():
+    """Get available encryption parameters."""
+    
+    try:
+        parameters = encryption_service.get_parameter_combinations()
+
+        return jsonify({"parameters": [
+            {"poly_mod_degree": p[0], "coeff_mod_bit_sizes": p[1]} 
+            for p in parameters
+        ]}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/set-parameters", methods=["POST"])
+def set_parameters():
+    """Set encryption parameters."""    
+    if not request.json:
+        return jsonify({"error": "No parameters provided,"}), 400
+        
+    try:        
+        print("Received data:", request.json)  # Add this line
+        
+        poly_mod_degree = request.json.get('poly_mod_degree', 4096)
+        coeff_mod_bit_sizes = request.json.get('coeff_mod_bit_sizes', [40, 20, 40])
+                
+        #Set user parameters inside encryption_service
+        encryption_service.set_user_selected_parameters(poly_mod_degree, coeff_mod_bit_sizes)                
+        
+        encryption_service.generate_keys(poly_mod_degree, coeff_mod_bit_sizes)        
+        
+        return jsonify({
+            "message": "Parameters set successfully",
+            "poly_mod_degree": poly_mod_degree,
+            "coeff_mod_bit_sizes": coeff_mod_bit_sizes
+        }), 200
+    except ValueError as ve:
+        return jsonify({"error": str(ve)}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 @app.route("/generate-keys", methods=["GET"])
 def generate_keys():
-    """Generate keys and train model endpoint with parameter analysis."""
-    global model, x_test, y_test
-    
-    if uploaded_file_path is None:
+    """Generate keys and analyze parameter impact on performance."""    
+    if not data_service.has_file():
         return jsonify({"error": "Please upload dataset first!!"}), 400
         
     try:
-        # Process data 
-        x_train, y_train, x_test, y_test = process_heart_disease_data(uploaded_file_path)
+        # Process data and train model only once        
+        data_service.process_data()
         
-        # Perform parameter analysis
-        results = []
+        model_service.train_model(data_service.get_training_data())
         
-        # Get parameter combinations
-        param_combinations = encryption_manager.get_parameter_combinations()
-        
-        for poly_mod_degree, coeff_mod_bit_sizes in param_combinations:
-            try:
-                print(f"Trying poly_mod_degree={poly_mod_degree}, coeff_mod_bit_sizes={coeff_mod_bit_sizes}")
-                
-                # Reset model for each parameter set
-                model = LR(x_train.shape[1])
-                
-                # Train model and measure time
-                start_train_time = time()
-                model = train_model(model, x_train, y_train)
-                train_time = time() - start_train_time
-                
-                # Generate keys with specific parameters and measure time
-                start_key_gen_time = time()
-                encryption_manager.generate_keys(
-                    poly_mod_degree=poly_mod_degree, 
-                    coeff_mod_bit_sizes=coeff_mod_bit_sizes
-                )
-                key_gen_time = time() - start_key_gen_time
-                
-                # Encrypt test data and measure time
-                start_encrypt_time = time()
-                enc_x_test = encryption_manager.encrypt_data(x_test)
-                encrypt_time = time() - start_encrypt_time
-                
-                # Create encrypted model
-                eelr = EncryptedLR(model)
-                
-                # Calculate plain accuracy and measure time
-                start_plain_compute_time = time()
-                def accuracy(model, x, y):
-                    out = model(x)
-                    correct = torch.abs(y - out) < 0.5
-                    return correct.float().mean()
-                
-                plain_accuracy = accuracy(model, x_test, y_test)
-                plain_compute_time = time() - start_plain_compute_time
-                
-                # Calculate encrypted accuracy and measure time
-                start_encrypted_compute_time = time()
-                encrypted_accuracy = encryption_manager.evaluate_model(eelr, enc_x_test, y_test)
-                encrypted_compute_time = time() - start_encrypted_compute_time
-                
-                # Store results
-                results.append({
-                    "poly_mod_degree": poly_mod_degree,
-                    "coeff_mod_bit_sizes": coeff_mod_bit_sizes,
-                    "train_time": train_time,
-                    "key_gen_time": key_gen_time,
-                    "encrypt_time": encrypt_time,
-                    "plain_compute_time": plain_compute_time,
-                    "encrypted_compute_time": encrypted_compute_time,
-                    "plain_accuracy": float(plain_accuracy),
-                    "encrypted_accuracy": float(encrypted_accuracy)
-                })
-                
-            except ValueError as ve:
-                print(f"Parameter error: {ve}")
-                continue
+        # Perform parameter analysis        
+        results = analysis_service.analyze_parameters()        
         
         return jsonify({"results": results}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# Other routes remain the same (encrypt, compute, etc.)
 @app.route("/encrypt", methods=["POST"])
 def encrypt():
-    """Encrypt test data endpoint."""
-    global enc_x_test
-    
-    if uploaded_file_path is None:
+    """Encrypt test data endpoint."""    
+    if not data_service.has_file():
         return jsonify({"error": "Please upload dataset first!!"}), 400
         
-    if encryption_manager.ctx_eval is None:
+    if not encryption_service.has_context():
         return jsonify({"error": "Please generate keys first!!"}), 400
+    
+    params = request.json or {}
+    poly_mod_degree = params.get('poly_mod_degree', 4096)
+    coeff_mod_bit_sizes = params.get('coeff_mod_bit_sizes', [40, 20, 40])
         
     try:
-        enc_x_test = encryption_manager.encrypt_data(x_test)
+        # Generate keys with specified parameters if they weren't set already
+        if not encryption_service.has_context():            
+            encryption_service.generate_keys(poly_mod_degree, coeff_mod_bit_sizes)
+            
+        # Encrypt the test data        
+        encryption_service.encrypt_data(data_service.get_test_features())        
+        
         return jsonify({"message": "Data encrypted successfully!!"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @app.route("/compute", methods=["GET"])
 def compute():
-    """Compute results endpoint."""
-    if uploaded_file_path is None:
+    """Compute accuracy results with encrypted data."""    
+    if not data_service.has_file():
         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-    if encryption_manager.ctx_eval is None:
+            
+    if not encryption_service.has_context():
         return jsonify({"error": "Please generate keys first!!"}), 400
         
-    if enc_x_test is None:
+    if not encryption_service.has_encrypted_data():
         return jsonify({"error": "Please encrypt data first!!"}), 400
 
     try:
-        # Create encrypted model
-        eelr = EncryptedLR(model)
+        # Create encrypted model from trained model        
+        model_service.create_encrypted_model()
         
         # Calculate plain accuracy
-        def accuracy(model, x, y):
-            out = model(x)
-            correct = torch.abs(y - out) < 0.5
-            return correct.float().mean()
-            
-        plain_accuracy = accuracy(model, x_test, y_test)
+        plain_metrics = model_service.evaluate_plain_metrics(
+            data_service.get_test_features(), 
+            data_service.get_test_targets()
+        )
         
-        # Calculate encrypted accuracy
-        encrypted_accuracy = encryption_manager.evaluate_model(eelr, enc_x_test, y_test)
-        diff_accuracy = plain_accuracy - encrypted_accuracy
+        # Calculate encrypted accuracy        
+        encrypted_metrics = encryption_service.encrypted_evaluation(
+            model_service.get_encrypted_model(),
+            encryption_service.get_encrypted_data(),
+            data_service.get_test_targets()
+        )
         
+        diff_metrics = {}
+        for metric in ['accuracy', 'precision', 'recall', 'f1']:
+            diff = plain_metrics[metric] - encrypted_metrics[metric]
+            diff_metrics[metric] = round(diff, 4)
+                
+        
+        # Compute differences for each metric        
         response_data = {
             "message": "Computation completed successfully",
-            "encrypted_accuracy": float(encrypted_accuracy),
-            "plain_accuracy": float(plain_accuracy),
-            "diff_accuracy": float(diff_accuracy)
+            "plain_metrics": plain_metrics,
+            "encrypted_metrics": encrypted_metrics,
+            "difference_metrics": diff_metrics
         }
         
         return jsonify(response_data), 200
@@ -969,234 +192,39 @@ def compute():
         print(f"Error in /compute: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-
-if __name__ == "__main__":#can remove thse two lines when using docer google cloud run these 2 lies wont effect the build
-    app.run(debug=True)  #app.run(debug=False) false for deplyoment this can hadle multiple requests true is development so it can only handle 1 request at a time 
-
-
-
-# #app.py new 4 3 files for 2 idea
-
-# from flask import Flask, request, jsonify
-# from flask_cors import CORS
-# import os
-# from werkzeug.utils import secure_filename
-# import torch
-# import random
-# from time import time
-
-# from data_handler import process_heart_disease_data
-# from model_manager import LR, EncryptedLR, train_model
-# from encryption_manager import EncryptionManager
-
-# # Initialize Flask app
-# app = Flask(__name__)
-# CORS(app)
-
-# # App configuration
-# UPLOAD_FOLDER = 'uploads'
-# ALLOWED_EXTENSIONS = {'csv'}
-# app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-
-# # Create uploads directory
-# os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-# # Set random seeds
-# torch.random.manual_seed(73)
-# random.seed(73)
-
-# # Global state
-# uploaded_file_path = None
-# x_test = None
-# y_test = None
-# model = None
-# encryption_manager = EncryptionManager()
-
-# def allowed_file(filename):
-#     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-# @app.route("/")
-# def home():
-#     return jsonify({"message": "Backend is running!"})
-
-# @app.route("/upload", methods=["POST"])
-# def upload_file():
-#     """Handle file upload endpoint."""
-#     global uploaded_file_path
+@app.route("/download-results", methods=["GET"])
+def download_results():
+    """Prepare analysis results for download with optional filtering."""    
+    if not data_service.has_file():
+        return jsonify({"error": "Please upload dataset first!!"}), 400
     
-#     if 'file' not in request.files:
-#         return jsonify({"error": "No file part"}), 400
-    
-#     file = request.files['file']
-#     if file.filename == '':
-#         return jsonify({"error": "No selected file"}), 400
-    
-#     if file and allowed_file(file.filename):
-#         filename = secure_filename(file.filename)
-#         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-#         file.save(filepath)
-#         uploaded_file_path = filepath
-#         return jsonify({"message": "File uploaded successfully!"}), 200
-    
-#     return jsonify({"error": "Invalid file type!"}), 400
+    filter_type = request.args.get('filter', 'all')
 
-# @app.route("/generate-keys", methods=["GET"])
-# def generate_keys():
-#     """Generate keys and train model endpoint with parameter analysis."""
-#     global model, x_test, y_test
-    
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     try:
-#         # Process data 
-#         x_train, y_train, x_test, y_test = process_heart_disease_data(uploaded_file_path)
-        
-#         # Perform parameter analysis
-#         results = []
-        
-#         # Get parameter combinations
-#         param_combinations = encryption_manager.get_parameter_combinations()
-        
-#         for poly_mod_degree, coeff_mod_bit_sizes in param_combinations:
-#             try:
-#                 print(f"Trying poly_mod_degree={poly_mod_degree}, coeff_mod_bit_sizes={coeff_mod_bit_sizes}")
-                
-#                 # Reset model for each parameter set
-#                 model = LR(x_train.shape[1])
-                
-#                 # Train model and measure time
-#                 start_train_time = time()
-#                 model = train_model(model, x_train, y_train)
-#                 train_time = time() - start_train_time
-                
-#                 # Generate keys with specific parameters and measure time
-#                 start_key_gen_time = time()
-#                 encryption_manager.generate_keys(
-#                     poly_mod_degree=poly_mod_degree, 
-#                     coeff_mod_bit_sizes=coeff_mod_bit_sizes
-#                 )
-#                 key_gen_time = time() - start_key_gen_time
-                
-#                 # Encrypt test data and measure time
-#                 start_encrypt_time = time()
-#                 enc_x_test = encryption_manager.encrypt_data(x_test)
-#                 encrypt_time = time() - start_encrypt_time
-                
-#                 # Create encrypted model
-#                 eelr = EncryptedLR(model)
-                
-#                 # Calculate plain accuracy and measure time
-#                 start_plain_compute_time = time()
-#                 def accuracy(model, x, y):
-#                     out = model(x)
-#                     correct = torch.abs(y - out) < 0.5
-#                     return correct.float().mean()
-                
-#                 plain_accuracy = accuracy(model, x_test, y_test)
-#                 plain_compute_time = time() - start_plain_compute_time
-                
-#                 # Calculate encrypted accuracy and measure time
-#                 start_encrypted_compute_time = time()
-#                 encrypted_accuracy = encryption_manager.evaluate_model(eelr, enc_x_test, y_test)
-#                 encrypted_compute_time = time() - start_encrypted_compute_time
-                
-#                 # Store results
-#                 results.append({
-#                     "poly_mod_degree": poly_mod_degree,
-#                     "coeff_mod_bit_sizes": coeff_mod_bit_sizes,
-#                     "train_time": train_time,
-#                     "key_gen_time": key_gen_time,
-#                     "encrypt_time": encrypt_time,
-#                     "plain_compute_time": plain_compute_time,
-#                     "encrypted_compute_time": encrypted_compute_time,
-#                     "plain_accuracy": float(plain_accuracy),
-#                     "encrypted_accuracy": float(encrypted_accuracy)
-#                 })
-                
-#             except ValueError as ve:
-#                 print(f"Parameter error: {ve}")
-#                 continue
-        
-#         return jsonify({"results": results}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-# # Other routes remain the same (encrypt, compute, etc.)
-# @app.route("/encrypt", methods=["POST"])
-# def encrypt():
-#     """Encrypt test data endpoint."""
-#     global enc_x_test
-    
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     if encryption_manager.ctx_eval is None:
-#         return jsonify({"error": "Please generate keys first!!"}), 400
-        
-#     try:
-#         enc_x_test = encryption_manager.encrypt_data(x_test)
-#         return jsonify({"message": "Data encrypted successfully!!"}), 200
-#     except Exception as e:
-#         return jsonify({"error": str(e)}), 500
-
-# @app.route("/compute", methods=["GET"])
-# def compute():
-#     """Compute results endpoint with noise analysis."""
-#     if uploaded_file_path is None:
-#         return jsonify({"error": "Please upload dataset first!!"}), 400
-        
-#     if encryption_manager.ctx_eval is None:
-#         return jsonify({"error": "Please generate keys first!!"}), 400
-        
-#     if enc_x_test is None:
-#         return jsonify({"error": "Please encrypt data first!!"}), 400
-
-#     try:
-#         # Create encrypted model
-#         eelr = EncryptedLR(model)
-        
-#         # Calculate plain accuracy and outputs
-#         def accuracy_and_outputs(model, x, y):
-#             out = model(x)
-#             correct = torch.abs(y - out) < 0.5
-#             return correct.float().mean(), out
+    try:
+        # Generate fresh analysis if needed
+        if not analysis_service.has_results():
             
-#         plain_accuracy, plain_outputs = accuracy_and_outputs(model, x_test, y_test)
+            data_service.process_data()
+            
+            model_service.train_model(data_service.get_training_data())
+            
+            analysis_service.analyze_parameters()        
         
-#         # Calculate encrypted accuracy and outputs
-#         encrypted_outputs = []
-#         for enc_x, y in zip(enc_x_test, y_test):
-#             enc_out = model(enc_x)
-#             encrypted_outputs.append(torch.tensor(enc_out.decrypt()))
-        
-#         encrypted_outputs = torch.stack(encrypted_outputs)
-#         encrypted_outputs = torch.sigmoid(encrypted_outputs)
-        
-#         # Calculate accuracies
-#         encrypted_accuracy = (torch.abs(encrypted_outputs - y_test) < 0.5).float().mean()
-#         diff_accuracy = plain_accuracy - encrypted_accuracy
-        
-#         # Calculate noise metrics
-#         noise_variance = torch.var(encrypted_outputs - plain_outputs)
-#         noise_std_dev = torch.std(encrypted_outputs - plain_outputs)
-        
-#         response_data = {
-#             "message": "Computation completed successfully",
-#             "encrypted_accuracy": float(encrypted_accuracy),
-#             "plain_accuracy": float(plain_accuracy),
-#             "diff_accuracy": float(diff_accuracy),
-#             "noise_variance": float(noise_variance),
-#             "noise_std_dev": float(noise_std_dev)
-#         }
-        
-#         return jsonify(response_data), 200
-        
-#     except Exception as e:
-#         print(f"Error in /compute: {str(e)}")
-#         return jsonify({"error": str(e)}), 500
+        results = analysis_service.get_results()
 
+        # Filter results if requested
+        selected_params = encryption_service.get_user_selected_parameters()
+        if filter_type == 'selected' and selected_params:
+            
+            filtered_results = [r for r in results if 
+                r["poly_mod_degree"] == selected_params["poly_mod_degree"] and 
+                r["coeff_mod_bit_sizes"] == selected_params["coeff_mod_bit_sizes"]]
+            return jsonify({"results": filtered_results}), 200
+        
+        return jsonify({"results": results}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
-# if __name__ == "__main__":
-#     app.run(debug=True)
+if __name__ == "__main__":    
+    app.run(debug=True)  # False for production to handle multiple requests
 
